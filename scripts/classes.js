@@ -330,12 +330,18 @@ class Building {
 			t.push(Math.round(this.constructionMaterial) + ' building widgets');
 			t.push(Math.floor(this.getConstructionFraction() * 100) + '% built');
 		}
+		if (type.pollutionProductionRate && this.on) {
+			t.push('Pollution: +' + this.getPollutionRate());
+		}
 		if (!this.on) {
 			t.push('Off');
 		}
 		return t.join('\n');
 	}
 }
+
+
+
 
 class World {
 	constructor() {
