@@ -2,21 +2,11 @@ RocketBoots.loadComponents([
 	"Game",
 	"Coords",
 	"StateMachine",
-	"Dice",
-	"Entity",
 	"Loop",
-	"Stage",
-	"World",
-	"Keyboard",
-	//"ImageBank"
+	"Keyboard"
 ]).ready(function(){
 
 	const states = {
-		// Possible states:
-		// - Splash screen / start
-		// - Intro crawl "life was good"
-		// - Observatory panic intro "oh no! you have to save us"
-		// - Main game loop
 		"setup": {
 			start: startSetup
 		},
@@ -35,22 +25,15 @@ RocketBoots.loadComponents([
 	};
 
 	const g = new RocketBoots.Game({
-		name: "LD42",
+		name: "Deluge of Doom",
 		instantiateComponents: [
 			{"state": "StateMachine", "options": {"states": states}},
 			{"loop": "Loop"},
-			{"dice": "Dice"},
-			//{"world": "World", "options": worldOptions},
-			//{"stage": "Stage", "options": stageOptions},
-			//{"images": "ImageBank"},
 			{"keyboard": "Keyboard"}
 		],
-		version: "ld42-v0.0.0"
+		version: "ld42-v1.0.1"
 	});
 	window.g = g;
-
-	console.log(g.state)
-
 	
 	const canvasElt = document.getElementById("pixi-view");
 	console.log(canvasElt);
@@ -63,7 +46,6 @@ RocketBoots.loadComponents([
 		roundPixels: true
 	});
 	PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
-
 	
 	canvasElt.appendChild(app.view);
 
@@ -97,121 +79,34 @@ RocketBoots.loadComponents([
 		"tool"
 	], app.stage);
 
-	const MERBAL0 = "images/merbal1.png",
-		APARTMENT = "images/apartment.png";
+	const MERBAL0 = "images/merbal1.png";
 
-/*
-{
-app.stage.interactive = true;
+	g.textStyle = new PIXI.TextStyle({
+		fontFamily: 'Mouse Memoirs',
+		fontSize: 16,
+		fill: '#170e19',
+		//stroke: '#c0d1cc',
+		//strokeThickness: 1,
+		wordWrap: true,
+		wordWrapWidth: 100
+	});
 
-let graphics = new PIXI.Graphics();
-
-// set a fill and line style
-graphics.beginFill(0xFF3300);
-graphics.lineStyle(10, 0xffd900, 1);
-
-// draw a shape
-graphics.moveTo(50,50);
-graphics.lineTo(250, 50);
-graphics.lineTo(100, 100);
-graphics.lineTo(250, 220);
-graphics.lineTo(50, 220);
-graphics.lineTo(50, 50);
-graphics.endFill();
-
-// set a fill and line style again
-graphics.lineStyle(10, 0xFF0000, 0.8);
-graphics.beginFill(0xFF700B, 1);
-
-// draw a second shape
-graphics.moveTo(210,300);
-graphics.lineTo(450,320);
-graphics.lineTo(570,350);
-graphics.quadraticCurveTo(600, 0, 480,100);
-graphics.lineTo(330,120);
-graphics.lineTo(410,200);
-graphics.lineTo(210,300);
-graphics.endFill();
-
-// draw a rectangle
-graphics.lineStyle(2, 0x0000FF, 1);
-graphics.drawRect(50, 250, 100, 100);
-
-// draw a circle
-graphics.lineStyle(0);
-graphics.beginFill(0xFFFF0B, 0.5);
-graphics.drawCircle(470, 200,100);
-graphics.endFill();
-
-graphics.lineStyle(20, 0x33FF00);
-graphics.moveTo(30,30);
-graphics.lineTo(600, 300);
-
-
-app.stage.addChild(graphics);
-
-// let's create a moving shape
-var thing = new PIXI.Graphics();
-app.stage.addChild(thing);
-thing.x = 800/2;
-thing.y = 600/2;
-
-var count = 0;
-
-// Just click on the stage to draw random lines
-app.stage.on('pointertap', onClick);
-
-function onClick() {
-    graphics.lineStyle(Math.random() * 30, Math.random() * 0xFFFFFF, 1);
-    graphics.moveTo(Math.random() * 800, Math.random() * 600);
-    graphics.bezierCurveTo(
-        Math.random() * 800, Math.random() * 600,
-        Math.random() * 800, Math.random() * 600,
-        Math.random() * 800, Math.random() * 600
-    );
-}
-
-app.ticker.add(function() {
-
-    count += 0.1;
-
-    thing.clear();
-    thing.lineStyle(10, 0xff0000, 1);
-    thing.beginFill(0xffFF00, 0.5);
-
-    thing.moveTo(-120 + Math.sin(count) * 20, -100 + Math.cos(count)* 20);
-    thing.lineTo( 120 + Math.cos(count) * 20, -100 + Math.sin(count)* 20);
-    thing.lineTo( 120 + Math.sin(count) * 20, 100 + Math.cos(count)* 20);
-    thing.lineTo( -120 + Math.cos(count)* 20, 100 + Math.sin(count)* 20);
-    thing.lineTo( -120 + Math.sin(count) * 20, -100 + Math.cos(count)* 20);
-
-    thing.rotation = count * 0.1;
-});
-
-}
-*/
-
-// var defaultIcon = "url('images/LD42x42.png'),auto";
-// var hoverIcon = "url('required/assets/bunny_saturated.png'),auto";
-// app.renderer.plugins.interaction.cursorStyles.default = defaultIcon;
-// app.renderer.plugins.interaction.cursorStyles.hover = hoverIcon;
+	// var defaultIcon = "url('images/LD42x42.png'),auto";
+	// var hoverIcon = "url('required/assets/bunny_saturated.png'),auto";
+	// app.renderer.plugins.interaction.cursorStyles.default = defaultIcon;
+	// app.renderer.plugins.interaction.cursorStyles.hover = hoverIcon;
 
 	g.mouseStagePos = {x: 0, y: 0};
 	g.tool = null;
-
-	g.state.transition('setup');
 	g.won = false;
-
-	// startGame(); // TODO: move to states
+	g.state.transition('setup');
 
 	// Expose some stuff
-	
 	g.app = app;
 	console.log(g);
 	return g;
 
 /*----------------------------------------------------------------------------*/
-
 
 	function startSetup() {
 		setupEvents(canvasElt, app.stage);
@@ -309,14 +204,19 @@ app.ticker.add(function() {
 			// 	building.toggleOn();
 			// }
 		} else if (g.tool) {
-			const building = new Building(g.tool, g.mouseStagePos.x, false);
-			const tooCloseToNeighbor = g.world.isBuildingTooCloseToNeighbors(building);
-			if (!tooCloseToNeighbor) {
-				g.world.addBuilding(building);
-				clearTool();
-			}
+			createNewBuilding();
 		}
 		updateBuildingGraphics(g.world, g.containers.buildings, PIXI);
+	}
+
+	function createNewBuilding() {
+		const building = new Building(g.tool, g.mouseStagePos.x, false);
+		const tooCloseToNeighbor = g.world.isBuildingTooCloseToNeighbors(building);
+		if (!tooCloseToNeighbor) {
+			g.world.addBuilding(building);
+			clearTool();
+			createStatsSpritesForBuilding(building, g.world, g.containers.stats);
+		}
 	}
 
 	function onBuildingClick(e) {
@@ -371,19 +271,10 @@ app.ticker.add(function() {
 	}
 
 	function updateBuildingGraphics(world, container, PIXI) {
+		container.removeChildren();
 		const graphics = new PIXI.Graphics();
 		graphics.clear();
-		// graphics.lineStyle(2, 0x433a60, 1);
 		g.world.buildings.forEach((building) => {
-			/*
-			// Building polygon
-			graphics.beginFill(building.getType().color, 0.1);
-			graphics.lineStyle(0, 0x775c4f, 0);
-			const polygon = getBuildingPolygon(building, world);
-			graphics.drawShape(polygon);
-			graphics.endFill();
-			*/
-
 			// Light
 			if (building.isConstructed()) {
 				graphics.beginFill(building.on ? 0xa19f7c : 0x2f213b, 1);
@@ -407,13 +298,14 @@ app.ticker.add(function() {
 			// s.on("pointerout", onSpriteOut);
 			container.addChild(s);
 			// Link together
-			linkSprintToEntity(s, building);
+			linkSpriteToEntity(s, building);
 		});
 		container.addChild(graphics);
 	}
 
-	function linkSprintToEntity(sprite, entity) {
-		entity.sprite = sprite;
+	function linkSpriteToEntity(sprite, entity, name) {
+		name = name || 'sprite';
+		entity[name] = sprite;
 		sprite.entity = entity;
 	}
 
@@ -486,14 +378,12 @@ app.ticker.add(function() {
 			s.interactive = true;
 			s.buttonMode = true;
 			s.on("pointerup", onPersonClick);
-			// s.on("pointerup", selectBlock);
 			// s.on("pointerover", onSpriteOver);
 			// s.on("pointerout", onSpriteOut);
 			container.addChild(s);
 			// Link together
-			linkSprintToEntity(s, person);
+			linkSpriteToEntity(s, person);
 		});
-		
 	}
 
 	function updateToolGraphics(world, mousePos, container) {
@@ -519,28 +409,27 @@ app.ticker.add(function() {
 			graphics.drawShape(polygon);
 		}
 		graphics.endFill();
-		// console.log(g.tool, mousePos.x, mousePos.y, graphics);
 	}
 
-	function updateStats(world, container) {
-		container.removeChildren();
-		if (!g.statsOverlay) {
-			return;
-		}
-		const style = new PIXI.TextStyle({
-			fontFamily: 'Mouse Memoirs',
-			fontSize: 16,
-			fill: '#170e19',
-			//stroke: '#c0d1cc',
-			//strokeThickness: 1,
-			wordWrap: true,
-			wordWrapWidth: 100
-		});
+	function createStatsSprites(world, container) {
 		world.buildings.forEach((b) => {
-			const text = new PIXI.Text(b.getStats(), style);
-			text.x = b.x - (b.getWidth()/2);
-			text.y = b.getYCoordinate(world) + 10;
-			container.addChild(text);
+			createStatsSpritesForBuilding(b, world, container);
+		});
+	}
+
+	function createStatsSpritesForBuilding(building, world, container) {
+		const text = new PIXI.Text(building.getStats(), g.textStyle);
+		linkSpriteToEntity(text, building, 'textSprite');
+		text.x = building.x - (building.getWidth()/2);
+		text.y = building.getYCoordinate(world) + 10;
+		text.visible = false;
+		container.addChild(text);
+	}
+
+	function updateStatsSprites(world) {
+		world.buildings.forEach((b) => {
+			b.textSprite.text = b.getStats();
+			b.textSprite.visible = g.statsOverlay;
 		});
 	}
 
@@ -564,11 +453,11 @@ app.ticker.add(function() {
 		createBuildingsGraphics();
 		g.containers.water.addChild(createWaterGraphics(g.world, PIXI));
 		createPersonGraphics(g.world, g.containers.people);
+		createStatsSprites(g.world, g.containers.stats);
 	}
 
 	function thinkingLoop(i, delta) {
 		g.world.progress(delta);
-		// TODO: Do thinking for people
 		writeValues(g.world);
 		updateBuildingGraphics(g.world, g.containers.buildings, PIXI);
 
@@ -603,7 +492,7 @@ app.ticker.add(function() {
 		const waterGraphics = g.containers.water.children[0];
 		updateWaterGraphics(g.world, waterGraphics);
 		updateToolGraphics(g.world, g.mouseStagePos, g.containers.tool);
-		updateStats(g.world, g.containers.stats);
+		updateStatsSprites(g.world);
 	}
 
 	function endGame() {

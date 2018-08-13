@@ -330,6 +330,7 @@ class World {
 		this.landDepthLevel = this.seaLevel + 500;
 		// this.minY = -4000;
 		// this.maxY = 4000;
+		this.naturalCleaningRate = -3;
 		
 		// Variables
 		this.pollutionRate = 0; // updated periodically
@@ -536,7 +537,7 @@ class World {
 	// Simulation, Calculations
 
 	calculatePollutionRate() {
-		let rate = -1;
+		let rate = this.naturalCleaningRate;
 		this.buildings.forEach((building) => {
 			rate += building.getPollutionRate();
 		});
@@ -626,7 +627,9 @@ class World {
 	getMaxBoxes() {
 		let totalMaxBoxes = 0;
 		this.buildings.forEach((b) => {
-			totalMaxBoxes += b.getType().maxBoxes;
+			if (!b.flooded && b.on) {
+				totalMaxBoxes += b.getType().maxBoxes;
+			}
 		});
 		return totalMaxBoxes;
 	}

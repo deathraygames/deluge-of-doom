@@ -7,6 +7,11 @@ body {
 	font-size: calc((2vw + 2vh + 20px)/3);;
 }
 
+a {
+	color: #a0b9ba;
+	text-decoration: none;
+}
+
 button {
 	cursor: pointer;
 	background-color: #a19f7c;
@@ -195,4 +200,8 @@ body.moving .ui {
 
 .splash-credits {
 	font-size: 70%;
+}
+
+.version {
+	color: #2f213b;
 }
