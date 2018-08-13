@@ -162,6 +162,7 @@ body.moving .ui {
 .splash img {
 	width: 2em;
 	height: 2em;
+	image-rendering: pixelated;
 }
 .splash h1 {
 	font-size: 300%;
