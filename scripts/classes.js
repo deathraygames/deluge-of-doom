@@ -1,5 +1,6 @@
 class Person {
-	constructor() {
+	constructor(n) {
+		this.n = n;
 		this.name = Math.round(Math.random() * 1000000000000);
 		this.happiness = 50;
 		this.x = 0;
@@ -9,7 +10,7 @@ class Person {
 		this.sprite = null;
 		this.target = new RocketBoots.Coords(0, 0);
 		this.busyCooldown = 1;
-		this.speed = 100;
+		this.speed = 80 + Math.round(Math.random() * 20);
 	}
 	hasHome() {
 		return (this.homeIndex !== null);
@@ -76,25 +77,39 @@ class Person {
 	removeHome() {
 		this.homeIndex = null;
 	}
-	move(delta) {
-		this.x = this.target.x; // - this.y) / 2;
-		this.y = this.target.y; // - this.y) / 2;
-		/*
+	move(delta, world) {
+		//this.x = this.target.x; // - this.y) / 2;
+		//this.y = this.target.y; // - this.y) / 2;
+		
 		// if (this.isInWater(world)) { }
 		// TODO: fix this
 		const pos = new RocketBoots.Coords(this.x, this.y);
-		const unitVector = pos.getUnitVector(this.target);
-		const distance = this.speed * (delta/1000);
-		const newPos = unitVector.multiply(distance * -1);
-		this.x = newPos.x;
-		this.y = newPos.y;
-		if (this.homeIndex == 1) {
-			//console.log(pos.x, pos.y, this.target.x, this.target.y, distance, '-->', this.x, this.y);
+		const distanceAway = pos.getDistance(this.target);
+		const unitVector = pos.getUnitVector(this.target).normalize(); // .multiply(-1);
+		const distance = Math.min(this.speed * (delta/1000), distanceAway);
+		const deltaPos = unitVector.multiply(distance);
+		const newPos = pos.add(deltaPos);
+		const terrainY = world.getTerrainAtX(newPos.x);
+		const waterY = world.getCurrentWaterLevel();
+		if (newPos.y < terrainY) { // simulate gravity
+			newPos.y = (newPos.y + terrainY) / 2;
 		}
-		*/
+		// newPos.y = Math.max(newPos.y, terrainY);
+		newPos.y = Math.min(waterY, newPos.y);
+		const maxY = world.getTerrainAtX(newPos.x);
+		this.setPosition(newPos);
+		// if (this.n == 1) {
+		// 	console.log(pos.x, pos.y, 'to', this.target.x, this.target.y, 
+		// 		'\n-->', unitVector, deltaPos, this.x, this.y);
+		// }
+	}
+	setPosition(position) {
+		this.x = position.x;
+		this.y = position.y;
 		this.syncSprite();
 	}
 	syncSprite() {
+		if (!this.sprite) { return false; }
 		this.sprite.x = Math.round(this.x);
 		this.sprite.y = Math.round(this.y);
 	}
@@ -102,7 +117,8 @@ class Person {
 		if (!position) {
 			return;
 		}
-		this.target = new RocketBoots.Coords(position.x, position.y);
+		const newTarget = new RocketBoots.Coords(position.x, position.y);
+		this.target.set(newTarget);
 	}
 	findTarget(world) {
 		if (this.busyCooldown > 0) {
@@ -138,6 +154,7 @@ class Person {
 class Building {
 	constructor(typeKey, x, fullyBuilt) {
 		this.x = x || 0;
+		this.y = 0;
 		this.on = Boolean(fullyBuilt);
 		this.typeKey = typeKey; // Shack, Apartment, Coal Faction, Solar Factory
 		this.flooded = false;
@@ -209,7 +226,8 @@ class Building {
 		return BUILDING_TYPES[this.typeKey];
 	}
 	getYCoordinate(world) {
-		return world.getTerrainAtX(this.x);
+		this.y = world.getTerrainAtX(this.x);
+		return this.y;
 	}
 	getPollutionRate() {
 		if (!this.on) { return 0; }
@@ -521,14 +539,18 @@ class World {
 		this.people.push(person);
 	}
 	generatePeople() {
+		let p = 0;
 		this.buildings.forEach((building, i) => {
 			let n = 0;
 			while ((building.residents.length < building.getType().residentCapacity) && n++ < 1000) {
-				const person = new Person();
+				const person = new Person(p++);
 				person.moveHome(this, i);
 				person.lookForNewWork(this.buildings, this);
 				this.addPerson(person);
-				person.targetHome(this.buildings);
+				const y = this.getTerrainAtX(building.x);
+				const homePos = {x: building.x, y: y};
+				person.setPosition(homePos);
+				person.targetHome(homePos);
 			}
 		});
 	}
@@ -600,7 +622,7 @@ class World {
 			}
 			p.setHappiness(this.buildings, this);
 			p.findTarget(this);
-			p.move(elapsedTime);
+			p.move(elapsedTime, this);
 		});
 		// console.log("pr", this.pollutionRate, "p", this.pollution, "w", this.warming,
 		// 	"mr", this.meltingRate,

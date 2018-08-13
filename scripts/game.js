@@ -31,7 +31,6 @@ RocketBoots.loadComponents([
 			{"loop": "Loop"},
 			{"keyboard": "Keyboard"}
 		],
-		version: "ld42-v1.0.1"
 	});
 	window.g = g;
 	
@@ -279,14 +278,31 @@ RocketBoots.loadComponents([
 		const graphics = new PIXI.Graphics();
 		graphics.clear();
 		g.world.buildings.forEach((building) => {
+			const y = building.getYCoordinate(world);
 			// Light
 			if (building.isConstructed()) {
 				graphics.beginFill(building.on ? 0xa19f7c : 0x2f213b, 1);
 				graphics.lineStyle(0, 0x775c4f, 1);
-				const lightPolygon = getBuildingLightPolygon(building, world);
-				graphics.drawShape(lightPolygon);
+				graphics.drawShape(getBuildingLightPolygon(building, y));
 				graphics.endFill();
 			}
+			{
+				graphics.beginFill(0x4f7754, 1);
+				graphics.lineStyle(0, 0x775c4f, 1);
+				graphics.drawShape(getBuildingPlatformPolygon(building, y));
+				graphics.endFill();
+			}
+			{
+				if (!building.isConstructed()) {
+					const fraction = Math.min(building.constructionMaterial, 100) / 100;
+					const r = 8 + Math.max(0, (building.constructionMaterial - 100) / 120);
+					drawArcGraphics(graphics, building, y, r, fraction, 0x3a604a);
+				} else if (building.production) {
+					const fraction = building.production / 100;
+					drawArcGraphics(graphics, building, y, 10, fraction, 0x65738c);
+				}
+			}
+
 			// Building sprite
 			let texture = pixiTextureCache[building.getType().textureFilePath];
 			const s = new PIXI.Sprite(texture);
@@ -307,16 +323,28 @@ RocketBoots.loadComponents([
 		container.addChild(graphics);
 	}
 
+	function drawArcGraphics(graphics, building, y, size, fraction, color) {
+		const PI2 = Math.PI * 2;
+		const start = Math.PI * 0.5;
+		graphics.beginFill(color, 0.3);
+		graphics.lineStyle(2, color, 1);
+		const x = building.x;
+		y = y - building.getHeight() - size - (size/2);
+		graphics.moveTo(x, y + size);
+		const radians = start + (fraction * PI2);
+		graphics.arc(x, y, size, start, radians);
+		graphics.endFill();
+	}
+
 	function linkSpriteToEntity(sprite, entity, name) {
 		name = name || 'sprite';
 		entity[name] = sprite;
 		sprite.entity = entity;
 	}
 
-	function getBuildingLightPolygon(building, world) {
+	function getBuildingLightPolygon(building, y) {
 		const w = building.getWidth();
 		const h = building.getHeight();
-		const y = building.getYCoordinate(world);
 		const left = building.x - (w/5);
 		const right = building.x + (w/6);
 		const top = y - (h/3);
@@ -324,6 +352,19 @@ RocketBoots.loadComponents([
 		const coords = [left, bottom, left, top, right, top, right, bottom, left, bottom];
 		const polygon = new PIXI.Polygon(coords);
 		return polygon;	
+	}
+
+	function getBuildingPlatformPolygon(building, y) {
+		const x = Math.round(building.x);
+		y = Math.round(y);
+		const w = building.getWidth();
+		const h = building.getHeight();
+		const left = x - w/2;
+		const right = x + w/2;
+		const top = y;
+		const base = y + 12;
+		const coords = [left, top, right, top, x, base, left, top];
+		return new PIXI.Polygon(coords);
 	}
 
 	function getBuildingPolygon(building, world) {
