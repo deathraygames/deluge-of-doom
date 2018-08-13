@@ -142,8 +142,9 @@ RocketBoots.loadComponents([
 
 	function setupEvents(canvasElt, stage) {
 		// Stage click
-		stage.on('tap', onStageClick);
-		stage.on('click', onStageClick);
+		stage.on('pointerup', onStageClick);
+		// stage.on('tap', onStageClick);
+		// stage.on('click', onStageClick);
 		//stage.on('mousemove touchmove', onStageClick);
 		//stage.on('mousemove touchmove', onStageClick);
 
@@ -197,20 +198,23 @@ RocketBoots.loadComponents([
 	}
 
 	function onStageClick(e) {
-		// console.log(e);
 		if (g.tool === 'switch') {
 			// const building = g.world.findBuildingNear(g.mouseStagePos.x, g.mouseStagePos.y);
 			// if (building) {
 			// 	building.toggleOn();
 			// }
 		} else if (g.tool) {
-			createNewBuilding();
+			let x = g.mouseStagePos.x;
+			if (e.data.pointerType === "touch") {
+				x = e.data.global.x - g.app.stage.x;
+			}
+			createNewBuilding(x);
 		}
 		updateBuildingGraphics(g.world, g.containers.buildings, PIXI);
 	}
 
-	function createNewBuilding() {
-		const building = new Building(g.tool, g.mouseStagePos.x, false);
+	function createNewBuilding(x) {
+		const building = new Building(g.tool, x, false);
 		const tooCloseToNeighbor = g.world.isBuildingTooCloseToNeighbors(building);
 		if (!tooCloseToNeighbor) {
 			g.world.addBuilding(building);

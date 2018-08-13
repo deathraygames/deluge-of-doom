@@ -16,10 +16,23 @@ class Panner {
 			.on('mouseup touchend', onUp)
 			.on('click touch', onTap);
 
+		function getX(e) {
+			if (e.pageX !== undefined) {
+				return e.pageX;
+			}
+			return e.originalEvent.touches[0].pageX;
+		}
+		function getY(e) {
+			if (e.pageY !== undefined) {
+				return e.pageY;
+			}
+			return e.originalEvent.touches[0].pageY;
+		}
+
 		function onDown(e) {
 			isDown = true;
 			didMove = false;
-			downPos.set({x: e.pageX, y: e.pageY});			
+			downPos.set({x: getX(e), y: getY(e)});
 		}
 
 		function onUp(e) {
@@ -33,7 +46,7 @@ class Panner {
 
 		function onMove(e){
 			if (isDown) {
-				let newPos = new RocketBoots.Coords(e.pageX, e.pageY);
+				let newPos = new RocketBoots.Coords(getX(e), getY(e));
 				let delta = downPos.subtract(newPos);
 				let distance = delta.getMagnitude();
 				// TODO: Rework this so that the movementThreshold avoids movement
