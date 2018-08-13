@@ -6,7 +6,10 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="styles/flood.css" />
 	<link rel="icon" href="images/favicon.ico" type="image/x-icon" />
+	<!--
 	<link href="https://fonts.googleapis.com/css?family=Jolly+Lodger|Mouse+Memoirs" rel="stylesheet">
+	-->
+	<link rel="stylesheet" href="styles/fonts.css" />
 </head>
 <body>
 <div id="page" class="show-splash">
@@ -146,12 +149,15 @@
 <div class="scripts">
 	<!-- Switch the paths of these to the appropriate local path -->
 	<script src="scripts/libs/lodash.min.js"></script>
-	<script src="scripts/libs/pixi.js"></script>
+	<script src="scripts/libs/pixi.min.js"></script>
 	<!-- <script src="scripts/libs/astar.js"></script> -->
 
 	<!-- Switch to local rocketboots when development is done -->
+	<!--
 	<script src="https://rocket-boots.github.io/rocket-boots/scripts/rocketboots/core.js"></script>
 	<script> RocketBoots.useGitHubScripts(); </script>
+	-->
+	<script src="scripts/rocketboots/core.js"></script>
 
 	<!-- The game's required files (classes, data) -->
 	<script src="scripts/Panner.js"></script>
@@ -161,7 +167,7 @@
 	<script src="scripts/game.js"></script>
 
 	<!-- For Deathraygames.com only: uncomment out for google analytics -->
-	<!-- <script src="https://deathraygames.com/js/ga.js"></script> -->
+	<script src="https://deathraygames.com/js/ga.js"></script>
 
 </div>
 </body>
