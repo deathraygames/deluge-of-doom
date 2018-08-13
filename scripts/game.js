@@ -31,6 +31,7 @@ RocketBoots.loadComponents([
 			{"loop": "Loop"},
 			{"keyboard": "Keyboard"}
 		],
+		version: "v1.1.0"
 	});
 	window.g = g;
 	
