@@ -101,6 +101,13 @@ button {
 	text-align: inherit;
 }
 
+.warning {
+	color: #3b2137;
+}
+.good {
+	color: #213b25;
+}
+
 /* Overrides for world */
 .ui .world dl {
 	/* text-align: left; */

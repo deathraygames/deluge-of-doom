@@ -7,6 +7,7 @@ class Person {
 		this.y = 0;
 		this.homeIndex = null; // reference to building
 		this.workIndex = null;
+		this.direction = (Math.random() < 0.5) ? 1 : -1;
 		this.sprite = null;
 		this.target = new RocketBoots.Coords(0, 0);
 		this.busyCooldown = 1;
@@ -19,22 +20,30 @@ class Person {
 		return (this.workIndex !== null);
 	}
 	lookForNewHome(buildings, world) {
+		let foundHomeIndex = null;
 		// TODO: look for proximity to water and to work (if any)
 		buildings.forEach((b, i) => {
 			if (b.hasResidentVacancy()) {
-				this.moveHome(world, i);
+				foundHomeIndex = i;
 				return;
 			}
 		});
+		if (foundHomeIndex !== null) {
+			this.moveHome(world, foundHomeIndex);
+		}
 	}
 	lookForNewWork(buildings, world) {
 		// TODO: look for proximity to home or self
+		let foundBuildingIndex = null;
 		buildings.forEach((b, i) => {
 			if (b.hasWorkerVacancy()) {
-				this.moveWork(world, i);
+				foundBuildingIndex = i;
 				return;
 			}
 		});
+		if (foundBuildingIndex !== null) {
+			this.moveWork(world, foundBuildingIndex);
+		}
 	}
 	moveHome(world, buildingIndex) {
 		const building = world.buildings[buildingIndex];
@@ -68,8 +77,7 @@ class Person {
 		return buildings[this.workIndex];
 	}
 	isInWater(world) {
-		// TODO: 
-		return false;
+		return (this.y >= world.getCurrentWaterLevel()) ? true : false;
 	}
 	removeWork() {
 		this.workIndex = null;
@@ -86,7 +94,8 @@ class Person {
 		const pos = new RocketBoots.Coords(this.x, this.y);
 		const distanceAway = pos.getDistance(this.target);
 		const unitVector = pos.getUnitVector(this.target).normalize(); // .multiply(-1);
-		const distance = Math.min(this.speed * (delta/1000), distanceAway);
+		const speed = (this.isInWater(world)) ? this.speed / 2 : this.speed;
+		const distance = Math.min(speed * (delta/1000), distanceAway);
 		const deltaPos = unitVector.multiply(distance);
 		const newPos = pos.add(deltaPos);
 		const terrainY = world.getTerrainAtX(newPos.x);
@@ -96,6 +105,9 @@ class Person {
 		}
 		// newPos.y = Math.max(newPos.y, terrainY);
 		newPos.y = Math.min(waterY, newPos.y);
+		if (newPos.y === waterY && terrainY < waterY) {
+			newPos.y -= 4; // jump out of water
+		}
 		const maxY = world.getTerrainAtX(newPos.x);
 		this.setPosition(newPos);
 		// if (this.n == 1) {
@@ -104,6 +116,7 @@ class Person {
 		// }
 	}
 	setPosition(position) {
+		this.direction = (position.x < this.x) ? -1 : 1;
 		this.x = position.x;
 		this.y = position.y;
 		this.syncSprite();
@@ -112,6 +125,7 @@ class Person {
 		if (!this.sprite) { return false; }
 		this.sprite.x = Math.round(this.x);
 		this.sprite.y = Math.round(this.y);
+		this.sprite.scale.x = this.direction * -1;
 	}
 	setTarget(position) {
 		if (!position) {
@@ -153,6 +167,7 @@ class Person {
 
 class Building {
 	constructor(typeKey, x, fullyBuilt) {
+		this.index = null;
 		this.x = x || 0;
 		this.y = 0;
 		this.on = Boolean(fullyBuilt);
@@ -174,9 +189,9 @@ class Building {
 		}
 		// Unpack boxes --> convert to material
 		const boxMaterial = 100;
-		if (this.constructionBoxes > 0) {
-			this.constructionMaterial += this.constructionBoxes * boxMaterial;
-			this.constructionBoxes = 0;
+		if (this.boxes >= 1 && this.constructionMaterial <= 0) {
+			this.constructionMaterial += boxMaterial;
+			this.boxes -= 1;
 		}
 		const seconds = delta/1000;
 		let constructionAmount = Math.min(this.constructionRate * seconds, this.constructionMaterial);
@@ -188,7 +203,7 @@ class Building {
 	}
 	needsConstructionBoxes() {
 		let cBoxesNeeded = (this.getConstructedMax() - this.constructed) / 100;
-		const cBoxesHave = this.constructionBoxes + (this.constructionMaterial / 100);
+		const cBoxesHave = this.boxes + (this.constructionMaterial / 100);
 		cBoxesNeeded -= cBoxesHave;
 		return Math.ceil(Math.max(cBoxesNeeded, 0));
 	}
@@ -202,12 +217,18 @@ class Building {
 		return this.getType().boxPrice * 100;
 	}
 	addConstructionBox(n) {
-		this.constructionBoxes += (n === undefined ? 1 : n);
+		n = (n === undefined ? 1 : n);
+		if (this.boxes > this.getType().maxBoxes - 1) {
+			n = 0;
+		}
+		this.boxes += n;
+		return n;
 	}
 
 	produce(delta) {
 		const type = this.getType();
-		let prodRate = type.boxProductionRate;
+		const workerMultiplier = this.getWorkerContributionMultiplier();
+		let prodRate = type.boxProductionRate * workerMultiplier;
 		const isFull = (this.boxes >= type.maxBoxes);
 		if (prodRate <= 0 || this.flooded || isFull || !this.isConstructed() || !this.on) {
 			this.production = 0;
@@ -232,9 +253,13 @@ class Building {
 	getPollutionRate() {
 		if (!this.on) { return 0; }
 		const type = this.getType();
-		const m = (1 + this.workers.length); //  * type.boxProductionRate;
+		const m = Math.max(this.getWorkerContributionMultiplier(), 0.2);
 		const p = type.pollutionProductionRate * m;
 		return p;
+	}
+	getWorkerContributionMultiplier() {
+		const type = this.getType();
+		return (type.workerCapacity) ? this.workers.length / type.workerCapacity : 0;
 	}
 	getWaterProximity(world) {
 		const y = this.getYCoordinate(world);
@@ -299,15 +324,15 @@ class Building {
 		return false;
 	}
 	hasResidentVacancy() {
-		if (this.flooded || !this.isConstructed()) {
+		if (!this.on || this.flooded || !this.isConstructed()) {
 			return false;
 		}
 		return (this.residents.length < this.getType().residentCapacity);
 	}
 	hasWorkerVacancy() {
-		if (this.flooded || !this.isConstructed()) {
+		if (!this.on || this.flooded || !this.isConstructed()) {
 			return false;
-		}		
+		}
 		return (this.workers.length < this.getType().workerCapacity);
 	}
 	getStats() {
@@ -509,6 +534,7 @@ class World {
 
 	addBuilding(building) {
 		this.buildings.push(building);
+		building.index = this.buildings.length - 1;
 	}
 	generateBuildings(type, housesLeft) {
 		// this.buildings.length = 0;
@@ -604,15 +630,17 @@ class World {
 		this.buildings.forEach((building) => {
 			building.checkFlooded(this);
 			building.construct(elapsedTime);
-			let cmNeeded = building.needsConstructionBoxes();
-			if (cmNeeded) {
+			let boxesNeeded = building.needsConstructionBoxes();
+			if (boxesNeeded) {
 				this.buildings.forEach((b) => {
-					if (cmNeeded > 0 && b.boxes > 0) {
+					if (boxesNeeded > 0 && b.boxes > 0) {
 						// Swap boxes
-						b.boxes -= 1;
-						building.addConstructionBox(1);
-						cmNeeded -= 1;
-						console.log("Trading box from", b, "to", building);
+						const boxesTaken = building.addConstructionBox(1);
+						b.boxes -= boxesTaken;
+						boxesNeeded -= boxesTaken;
+						if (boxesTaken > 0) {
+							console.log("Trading", boxesTaken, "boxes from", b, "to", building);
+						}
 					}
 				});
 			}

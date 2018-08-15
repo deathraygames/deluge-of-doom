@@ -6,11 +6,13 @@ const BUILDING_TYPES = {
 		"color": 0x775c4f,
 		"residentCapacity": 1,
 		"workerCapacity": 0,
-		"maxBoxes": 0,
+		"maxBoxes": 1,
 		"boxProductionRate": 0,
 		"pollutionProductionRate": 0,
 		"boxPrice": 1,
-		"textureFilePath": "images/house.png"
+		"textureFilePath": "images/",
+		"textureFileNameOn": "house_on.png",
+		"textureFileNameOff": "house_off.png"
 	},
 	"A": {
 		"name": "Apartment",
@@ -19,11 +21,13 @@ const BUILDING_TYPES = {
 		"color": 0x775c4f,
 		"residentCapacity": 3,
 		"workerCapacity": 0,
-		"maxBoxes": 0,
+		"maxBoxes": 1,
 		"boxProductionRate": 0,
 		"pollutionProductionRate": 0,
 		"boxPrice": 4,
-		"textureFilePath": "images/apartment.png"
+		"textureFilePath": "images/",
+		"textureFileNameOn": "apartment_on.png",
+		"textureFileNameOff": "apartment_off.png"
 	},
 	"C": {
 		"name": "Coal Factory",
@@ -31,12 +35,14 @@ const BUILDING_TYPES = {
 		"height": 50,
 		"color": 0x4f5277,
 		"residentCapacity": 0,
-		"workerCapacity": 5,
+		"workerCapacity": 6,
 		"maxBoxes": 3,
 		"boxProductionRate": 10,
-		"pollutionProductionRate": 2,
+		"pollutionProductionRate": 10,
 		"boxPrice": 6,
-		"textureFilePath": "images/carbon_factory.png"
+		"textureFilePath": "images/",
+		"textureFileNameOn": "carbon_factory_on.png",
+		"textureFileNameOff": "carbon_factory_off.png"
 	},
 	"S": {
 		"name": "Solar Factory",
@@ -44,11 +50,13 @@ const BUILDING_TYPES = {
 		"height": 50,
 		"color": 0x4f5277,
 		"residentCapacity": 0,
-		"workerCapacity": 5,
+		"workerCapacity": 8,
 		"maxBoxes": 2,
-		"boxProductionRate": 8,
+		"boxProductionRate": 6,
 		"pollutionProductionRate": 0,
 		"boxPrice": 12,
-		"textureFilePath": "images/solar_factory.png"
+		"textureFilePath": "images/",
+		"textureFileNameOn": "solar_factory_on.png",
+		"textureFileNameOff": "solar_factory_off.png"
 	}
 };

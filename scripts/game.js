@@ -62,7 +62,7 @@ RocketBoots.loadComponents([
 	// Create the game-specific world
 	g.world = new World();
 	g.world.generateTerrain();
-	g.world.generateBuildings('A', 16);
+	g.world.generateBuildings('A', 12);
 	g.world.generateBuildings('C', 5);
 	g.world.generatePeople();
 
@@ -81,7 +81,7 @@ RocketBoots.loadComponents([
 
 	const MERBAL0 = "images/merbal1.png";
 
-	g.textStyle = new PIXI.TextStyle({
+	const textStyleOptions = {
 		fontFamily: 'Mouse Memoirs',
 		fontSize: 16,
 		fill: '#170e19',
@@ -89,7 +89,11 @@ RocketBoots.loadComponents([
 		//strokeThickness: 1,
 		wordWrap: true,
 		wordWrapWidth: 100
-	});
+	};
+	g.textStyle = new PIXI.TextStyle(textStyleOptions);
+	const FLOOD_TEXT_COLOR = '#4f5277';
+	textStyleOptions.fill = FLOOD_TEXT_COLOR;
+	g.floodedTextStyle = new PIXI.TextStyle(textStyleOptions);
 
 	// var defaultIcon = "url('images/LD42x42.png'),auto";
 	// var hoverIcon = "url('required/assets/bunny_saturated.png'),auto";
@@ -97,6 +101,7 @@ RocketBoots.loadComponents([
 	// app.renderer.plugins.interaction.cursorStyles.hover = hoverIcon;
 
 	g.mouseStagePos = {x: 0, y: 0};
+	g.focusBuilding = null;
 	g.tool = null;
 	g.won = false;
 	g.state.transition('setup');
@@ -113,7 +118,8 @@ RocketBoots.loadComponents([
 
 		const textures = [MERBAL0];
 		_.each(BUILDING_TYPES, (type) => {
-			textures.push(type.textureFilePath);
+			textures.push(type.textureFilePath + type.textureFileNameOn);
+			textures.push(type.textureFilePath + type.textureFileNameOff);
 		});
 
 		PIXI.loader
@@ -228,6 +234,11 @@ RocketBoots.loadComponents([
 		building.toggleOn();
 	}
 
+	function onBuildingOver(e) {
+		const building = e.target.entity;
+		g.focusBuilding = building;
+	}
+
 	function onPersonClick(e) {
 		console.log(e.target, e.target.entity);
 	}
@@ -281,12 +292,12 @@ RocketBoots.loadComponents([
 		g.world.buildings.forEach((building) => {
 			const y = building.getYCoordinate(world);
 			// Light
-			if (building.isConstructed()) {
-				graphics.beginFill(building.on ? 0xa19f7c : 0x2f213b, 1);
-				graphics.lineStyle(0, 0x775c4f, 1);
-				graphics.drawShape(getBuildingLightPolygon(building, y));
-				graphics.endFill();
-			}
+			// if (building.isConstructed()) {
+			// 	graphics.beginFill(building.on ? 0xa19f7c : 0x2f213b, 1);
+			// 	graphics.lineStyle(0, 0x775c4f, 1);
+			// 	graphics.drawShape(getBuildingLightPolygon(building, y));
+			// 	graphics.endFill();
+			// }
 			{
 				graphics.beginFill(0x4f7754, 1);
 				graphics.lineStyle(0, 0x775c4f, 1);
@@ -305,7 +316,10 @@ RocketBoots.loadComponents([
 			}
 
 			// Building sprite
-			let texture = pixiTextureCache[building.getType().textureFilePath];
+			const type = building.getType();
+			let texturePath = type.textureFilePath;
+			texturePath += (building.on) ? type.textureFileNameOn : type.textureFileNameOff;
+			let texture = pixiTextureCache[texturePath];
 			const s = new PIXI.Sprite(texture);
 			s.x = building.x;
 			s.y = building.getYCoordinate(world);
@@ -315,7 +329,7 @@ RocketBoots.loadComponents([
 			s.interactive = true;
 			s.buttonMode = true;
 			s.on("pointerup", onBuildingClick);
-			// s.on("pointerover", onSpriteOver);
+			s.on("pointerover", onBuildingOver);
 			// s.on("pointerout", onSpriteOut);
 			container.addChild(s);
 			// Link together
@@ -475,7 +489,8 @@ RocketBoots.loadComponents([
 	function updateStatsSprites(world) {
 		world.buildings.forEach((b) => {
 			b.textSprite.text = b.getStats();
-			b.textSprite.visible = g.statsOverlay;
+			b.textSprite.visible = (g.statsOverlay || g.focusBuilding === b);
+			b.textSprite.style = (b.flooded) ? g.floodedTextStyle : g.textStyle;
 		});
 	}
 
@@ -487,7 +502,7 @@ RocketBoots.loadComponents([
 		g.loop.start();
 		app.ticker.add(tickerLoop);
 
-		toggleStatsOverlay();
+		//toggleStatsOverlay();
 	}
 
 	function stopGame() {
@@ -527,7 +542,15 @@ RocketBoots.loadComponents([
 	}
 
 	function writeValue(eltId, value) {
-		document.getElementById(eltId).innerHTML = Math.round(value).toLocaleString();
+		const elt = document.getElementById(eltId);
+		elt.innerHTML = Math.round(value).toLocaleString();
+		if (eltId === 'happiness-value') {
+			if (value < 70) {
+				elt.classList.add('warning');
+			} else {
+				elt.classList.remove('warning');
+			}
+		}
 	}
 
 	function tickerLoop() {
